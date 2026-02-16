@@ -640,9 +640,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Prince Tetteh Ayiku** - DevOps Engineer in Training
 
-- **GitHub**: [@yourusername](https://github.com/yourusername)
-- **LinkedIn**: [Prince Tetteh Ayiku](https://linkedin.com/in/prince-tetteh-ayiku)
-- **Email**: [Your Email]
+- **GitHub**: [@celetrialprince166](https://github.com/celetrialprince166)
+- **LinkedIn**: [Prince Ayiku](https://www.linkedin.com/in/prince-ayiku-8943aa3a3/)
+- **Email**: [princeayiku5@gmail.com](mailto:princeayiku5@gmail.com)
 
 ---
 
