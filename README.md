@@ -99,18 +99,61 @@ The system implements a production-ready reverse proxy architecture using Nginx 
 
 ## Installation / Setup Instructions
 
-### Step 1: Clone the Repository
+### Recommended: One-Command Bootstrap (Industry-Standard Workflow)
+
+For a production-style, repeatable bootstrap, use the provided script to build images, create the Docker network, and start all services (PostgreSQL, backend, frontend, and Nginx) with a single command.
+
+1. **Clone the repository**
 
 ```bash
 git clone <repository-url>
 cd docker_lab1
 ```
 
-### Step 2: Configure Environment Variables
+2. **Make the bootstrap script executable** (first run only)
+
+```bash
+chmod +x ./bootstrap-app.sh
+```
+
+3. **Start all services (build + run)**
+
+```bash
+./bootstrap-app.sh
+```
+
+This script will:
+
+- Build all Docker images (Nginx, backend, frontend) using the multi-stage Dockerfiles
+- Create a dedicated Docker network (`notes-net`)
+- Start a PostgreSQL container with `notes_db` database
+- Start the NestJS backend and Next.js frontend containers
+- Start the Nginx reverse proxy on `http://localhost:8080`
+
+4. **Optional: Start services without rebuilding images**
+
+```bash
+./bootstrap-app.sh --no-build
+```
+
+5. **Optional: Tear everything down (containers + network)**
+
+```bash
+./bootstrap-app.sh --destroy
+```
+
+> **Warning**: `--destroy` stops and removes the application containers and the `notes-net` Docker network. It does not delete images.
+
+### Manual Setup (Alternative / For Reference)
+
+You can still start the stack manually using the following steps if you prefer full control or for debugging.
+
+#### Step 1: Configure Environment Variables
 
 Create environment files for backend and frontend:
 
 **Backend** (`backend/.env`):
+
 ```bash
 DB_HOST=localhost
 DB_PORT=5432
@@ -122,13 +165,12 @@ PORT=3001
 ```
 
 **Frontend** (`frontend/.env.local`):
+
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-### Step 3: Build Docker Images
-
-Build all three containers:
+#### Step 2: Build Docker Images
 
 ```bash
 # Build Nginx reverse proxy
@@ -144,15 +186,8 @@ cd ../frontend
 docker build -t notes-frontend:latest .
 ```
 
-### Step 4: Start PostgreSQL Database
+#### Step 3: Start PostgreSQL Database
 
-If using external PostgreSQL:
-```bash
-# Ensure PostgreSQL is running and accessible
-# Create database: notes_db
-```
-
-Or use Docker:
 ```bash
 docker run -d \
   --name postgres-db \
@@ -163,13 +198,20 @@ docker run -d \
   postgres:14-alpine
 ```
 
-### Step 5: Start Backend Container
+#### Step 4: Create Docker Network
+
+```bash
+docker network create notes-net
+docker network connect notes-net postgres-db
+```
+
+#### Step 5: Start Backend Container
 
 ```bash
 docker run -d \
   --name backend \
-  --network bridge \
-  -e DB_HOST=host.docker.internal \
+  --network notes-net \
+  -e DB_HOST=postgres-db \
   -e DB_PORT=5432 \
   -e DB_NAME=notes_db \
   -e DB_USERNAME=postgres \
@@ -179,24 +221,24 @@ docker run -d \
   notes-backend:latest
 ```
 
-### Step 6: Start Frontend Container
+#### Step 6: Start Frontend Container
 
 ```bash
 docker run -d \
   --name frontend \
-  --network bridge \
-  -e NEXT_PUBLIC_API_URL=http://localhost:8080/api \
+  --network notes-net \
+  -e NEXT_PUBLIC_API_URL=http://nginx-proxy:8080/api \
   -e PORT=3000 \
   -p 3000:3000 \
   notes-frontend:latest
 ```
 
-### Step 7: Start Nginx Reverse Proxy
+#### Step 7: Start Nginx Reverse Proxy
 
 ```bash
 docker run -d \
   --name nginx-proxy \
-  --network bridge \
+  --network notes-net \
   -p 8080:80 \
   nginx-proxy:latest
 ```
